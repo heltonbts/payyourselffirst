@@ -1,1 +1,1 @@
-# payyoufirst
+# payyourselffirst
