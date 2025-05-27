@@ -1,8 +1,12 @@
 import Router from '@koa/router';
 
-import { usersList } from './modules/users/index.js'
+import * as users from './modules/users/index.js'
 
 
 export const router = new Router();
 
-router.get('/users', usersList);
+router.get('/users', users.list);
+router.post('/users', users.create);
+router.put('/users/:id', users.update);
+router.delete('/users/:id', users.remove);
+
