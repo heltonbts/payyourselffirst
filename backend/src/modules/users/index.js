@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
-import { prisma } from "../data/index.js";
+import bcrypt from 'bcrypt';
 
+import { prisma } from "../data/index.js";
 
 export const login = async (ctx) => {
   try {
@@ -44,7 +45,11 @@ export const list = async (ctx, next) => {
 
 export const create = async (ctx, next) => {
   try {
+    const saltRounds = 10
+
+    const hashedPass = await bcrypt.hash(ctx.request.body.password, saltRounds)
     const { name, email, password } = ctx.request.body;
+    console.log(hashedPass)
 
 
     if (!name || !email || !password) {
@@ -57,7 +62,7 @@ export const create = async (ctx, next) => {
       data: {
         name,
         email,
-        password
+        password: hashedPass
       }
     });
 
