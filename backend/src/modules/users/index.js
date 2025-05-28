@@ -12,10 +12,18 @@ export const login = async (ctx) => {
       }
     })
 
-    if (!user || user.password !== password) {
+    if (!user || !password) {
       ctx.status = 401
       ctx.body = 'User not found'
       return
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      ctx.status = 401;
+      ctx.body = { error: 'Email ou senha inválidos' };
+      return;
     }
 
     const token = jwt.sign({ sub: user.id }, process.env.JWT_KEY)
@@ -44,12 +52,8 @@ export const list = async (ctx, next) => {
 }
 
 export const create = async (ctx, next) => {
+  const { name, email, password } = ctx.request.body;
   try {
-    const saltRounds = 10
-
-    const hashedPass = await bcrypt.hash(ctx.request.body.password, saltRounds)
-    const { name, email, password } = ctx.request.body;
-    console.log(hashedPass)
 
 
     if (!name || !email || !password) {
@@ -57,6 +61,9 @@ export const create = async (ctx, next) => {
       ctx.body = { error: 'Nome, email e senha são obrigatórios' };
       return;
     }
+
+    const saltRounds = 10
+    const hashedPass = await bcrypt.hash(ctx.request.body.password, saltRounds)
 
     const user = await prisma.user.create({
       data: {
