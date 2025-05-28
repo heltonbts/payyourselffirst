@@ -4,8 +4,16 @@ import bcrypt from 'bcrypt';
 import { prisma } from "../data/index.js";
 
 export const login = async (ctx) => {
+  const [type, credentials] = ctx.request.headers.authorization.split(' ')
+
+  if (type !== 'Basic') {
+    ctx.status = 400
+    return
+  }
+
   try {
-    const { email, password } = ctx.request.body
+    const decoded = Buffer.from(credentials, 'base64').toString('utf8');
+    const [email, password] = decoded.split(':')
     const user = await prisma.user.findUnique({
       where: {
         email
