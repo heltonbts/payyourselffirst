@@ -1,4 +1,34 @@
+import jwt from "jsonwebtoken";
 import { prisma } from "../data/index.js";
+
+
+export const login = async (ctx) => {
+  try {
+    const { email, password } = ctx.request.body
+    const user = await prisma.user.findUnique({
+      where: {
+        email
+      }
+    })
+
+    if (!user || user.password !== password) {
+      ctx.status = 401
+      ctx.body = 'User not found'
+      return
+    }
+
+    const token = jwt.sign({ sub: user.id }, process.env.JWT_KEY)
+
+    ctx.status = 200;
+    ctx.body = { user, token };
+
+
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = { error: error.message };
+  }
+
+}
 
 export const list = async (ctx, next) => {
   try {
@@ -52,7 +82,6 @@ export const update = async (ctx) => {
     const { id } = ctx.params;
     const { name, email, password } = ctx.request.body;
 
-    // Atualizar no banco
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
@@ -87,7 +116,6 @@ export const remove = async (ctx, next) => {
   try {
     const { id } = ctx.params;
 
-    // Verificar se usuário existe antes de deletar
     const userExists = await prisma.user.findUnique({
       where: { id }
     });
