@@ -1,23 +1,40 @@
-import jwt from "jsonwebtoken";
-import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 
-import { prisma } from "../data/index.js";
+import { prisma } from '../data/index.js'
 
-export const login = async (ctx) => {
-  const [type, credentials] = ctx.request.headers.authorization.split(' ')
+export const getTokenByAuthHeader = authHeader => {
+  const [type, credentials] = authHeader.split(' ')
 
   if (type !== 'Basic') {
-    ctx.status = 400
-    return
+    throw new Error('Wrong token type')
   }
 
+  const decoded = Buffer.from(credentials, 'base64').toString('utf8')
+  const encoded = Buffer.from(decoded, 'utf-8').toString('base64')
+
+  if (encoded !== credentials) {
+    throw new Error('Wrong credentials is not correct base64 encoded')
+  }
+
+  const [email, password] = decoded.split(':')
+
+  if (decoded.indexOf(':') === -1) {
+    throw new Error('Wrong credentials is not correct encoded')
+  }
+
+  return decoded.split(':')
+}
+
+export const login = async ctx => {
+  const [email, password] = getTokenByAuthHeader(
+    ctx.request.headers.authorization
+  )
   try {
-    const decoded = Buffer.from(credentials, 'base64').toString('utf8');
-    const [email, password] = decoded.split(':')
     const user = await prisma.user.findUnique({
       where: {
-        email
-      }
+        email,
+      },
     })
 
     if (!user || !password) {
@@ -26,48 +43,44 @@ export const login = async (ctx) => {
       return
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password)
 
     if (!isPasswordValid) {
-      ctx.status = 401;
-      ctx.body = { error: 'Email ou senha inválidos' };
-      return;
+      ctx.status = 401
+      ctx.body = { error: 'Email ou senha inválidos' }
+      return
     }
 
     const token = jwt.sign({ sub: user.id }, process.env.JWT_KEY)
 
-    ctx.status = 200;
-    ctx.body = { user, token };
-
-
+    ctx.status = 200
+    ctx.body = { user, token }
   } catch (error) {
-    ctx.status = 500;
-    ctx.body = { error: error.message };
+    console.log('error:', error)
+    ctx.status = 500
+    ctx.body = { error: error.message }
   }
-
 }
 
 export const list = async (ctx, next) => {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany()
     ctx.body = users
   } catch (error) {
-    ctx.status = 500;
-    ctx.body = "Internal Server Error";
-    console.log(error);
-    return;
+    ctx.status = 500
+    ctx.body = 'Internal Server Error'
+    console.log(error)
+    return
   }
 }
 
 export const create = async (ctx, next) => {
-  const { name, email, password } = ctx.request.body;
+  const { name, email, password } = ctx.request.body
   try {
-
-
     if (!name || !email || !password) {
-      ctx.status = 400;
-      ctx.body = { error: 'Nome, email e senha são obrigatórios' };
-      return;
+      ctx.status = 400
+      ctx.body = { error: 'Nome, email e senha são obrigatórios' }
+      return
     }
 
     const saltRounds = 10
@@ -77,73 +90,73 @@ export const create = async (ctx, next) => {
       data: {
         name,
         email,
-        password: hashedPass
-      }
-    });
+        password: hashedPass,
+      },
+    })
 
-    ctx.status = 201;
+    ctx.status = 201
     ctx.body = {
       message: 'Usuário criado com sucesso',
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        createdAt: user.createdAt
-      }
-    };
+        createdAt: user.createdAt,
+      },
+    }
   } catch (error) {
-    ctx.status = 500;
-    ctx.body = { error: error.message };
+    ctx.status = 500
+    ctx.body = { error: error.message }
   }
 }
 
-export const update = async (ctx) => {
+export const update = async ctx => {
   try {
-    const { id } = ctx.params;
-    const { name, email, password } = ctx.request.body;
+    const { id } = ctx.params
+    const { name, email, password } = ctx.request.body
 
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
         ...(name && { name }),
         ...(email && { email }),
-        ...(password && { password })
+        ...(password && { password }),
       },
       select: {
         id: true,
         name: true,
         email: true,
-        updatedAt: true
-      }
-    });
+        updatedAt: true,
+      },
+    })
 
     ctx.body = {
       message: 'Usuário atualizado com sucesso',
-      user: updatedUser
-    };
+      user: updatedUser,
+    }
   } catch (error) {
     if (error.code === 'P2025') {
-      ctx.status = 404;
-      ctx.body = { error: 'Usuário não encontrado' };
-      return;
+      ctx.status = 404
+      ctx.body = { error: 'Usuário não encontrado' }
+      return
     }
-    ctx.status = 500;
-    ctx.body = { error: error.message };
+    ctx.status = 500
+    ctx.body = { error: error.message }
   }
-};
+}
 
 export const remove = async (ctx, next) => {
   try {
-    const { id } = ctx.params;
+    const { id } = ctx.params
 
     const userExists = await prisma.user.findUnique({
-      where: { id }
-    });
+      where: { id },
+    })
 
     if (!userExists) {
-      ctx.status = 404;
-      ctx.body = { error: 'Usuário não encontrado' };
-      return;
+      ctx.status = 404
+      ctx.body = { error: 'Usuário não encontrado' }
+      return
     }
 
     const deletedUser = await prisma.user.delete({
@@ -152,34 +165,32 @@ export const remove = async (ctx, next) => {
         id: true,
         name: true,
         email: true,
-        deletedAt: true
-      }
-    });
+        deletedAt: true,
+      },
+    })
 
-    ctx.status = 200;
+    ctx.status = 200
     ctx.body = {
       message: 'Usuário deletado com sucesso',
-      user: deletedUser
-    };
-
+      user: deletedUser,
+    }
   } catch (error) {
     if (error.code === 'P2025') {
-      ctx.status = 404;
-      ctx.body = { error: 'Usuário não encontrado' };
-      return;
+      ctx.status = 404
+      ctx.body = { error: 'Usuário não encontrado' }
+      return
     }
 
     if (error.code === 'P2003') {
-      ctx.status = 409;
+      ctx.status = 409
       ctx.body = {
-        error: 'Não é possível deletar usuário com dados relacionados'
-      };
-      return;
+        error: 'Não é possível deletar usuário com dados relacionados',
+      }
+      return
     }
 
-    console.error('Erro no delete:', error);
-    ctx.status = 500;
-    ctx.body = { error: 'Erro interno do servidor' };
+    console.error('Erro no delete:', error)
+    ctx.status = 500
+    ctx.body = { error: 'Erro interno do servidor' }
   }
 }
-
