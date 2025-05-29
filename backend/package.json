@@ -21,7 +21,8 @@
     "jsonwebtoken": "^9.0.2",
     "koa": "^3.0.0",
     "koa-bodyparser": "^4.4.1",
-    "lint-staged": "^16.0.0"
+    "lint-staged": "^16.0.0",
+    "supertest": "^7.1.1"
   },
   "lint-staged": {
     "./src/**/*.{js,md,json}": "npm fix"
