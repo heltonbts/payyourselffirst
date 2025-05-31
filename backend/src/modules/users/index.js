@@ -1,15 +1,15 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 
-import { prisma } from '../data/index.js'
 import { getTokenByAuthHeader } from './services.js'
+import * as Model from './model.js'
 
 export const login = async ctx => {
   const [email, password] = getTokenByAuthHeader(
     ctx.request.headers.authorization
   )
   try {
-    const user = await prisma.user.findUnique({
+    const user = await Model.findUnique({
       where: { email },
     })
 
@@ -18,14 +18,6 @@ export const login = async ctx => {
       ctx.body = 'User not found'
       return
     }
-
-    // const isPasswordValid = await bcrypt.compare(password, user.password)
-
-    // if (!isPasswordValid) {
-    //   ctx.status = 401
-    //   ctx.body = { error: 'Email ou senha inválidos' }
-    //   return
-    // }
 
     const token = jwt.sign({ sub: user.id }, process.env.JWT_KEY)
 
@@ -40,7 +32,7 @@ export const login = async ctx => {
 
 export const list = async (ctx, next) => {
   try {
-    const users = await prisma.user.findMany()
+    const users = await Model.findMany()
     ctx.body = users
   } catch (error) {
     ctx.status = 500
@@ -62,7 +54,7 @@ export const create = async (ctx, next) => {
     const saltRounds = 10
     const hashedPass = await bcrypt.hash(ctx.request.body.password, saltRounds)
 
-    const user = await prisma.user.create({
+    const user = await Model.create({
       data: {
         name,
         email,
@@ -91,7 +83,7 @@ export const update = async ctx => {
     const { id } = ctx.params
     const { name, email, password } = ctx.request.body
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await Model.update({
       where: { id },
       data: {
         ...(name && { name }),
@@ -125,7 +117,7 @@ export const remove = async (ctx, next) => {
   try {
     const { id } = ctx.params
 
-    const userExists = await prisma.user.findUnique({
+    const userExists = await Model.findUnique({
       where: { id },
     })
 
@@ -135,7 +127,7 @@ export const remove = async (ctx, next) => {
       return
     }
 
-    const deletedUser = await prisma.user.delete({
+    const deletedUser = await Model.remove({
       where: { id },
       select: {
         id: true,

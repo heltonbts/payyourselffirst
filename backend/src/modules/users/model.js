@@ -1,7 +1,17 @@
 import bcrypt from 'bcrypt'
 import { prisma } from '../data/index.js'
 
-const omit = keys => {}
+const omit = (keys, obj) =>
+  Object.keys(obj).reduce((memo, current) => {
+    if (keys.includes(current)) {
+      return memo
+    }
+    const acc = {
+      ...memo,
+      [current]: obj[current],
+    }
+    return acc
+  }, {})
 
 const passwordCheck = async (params, next) => {
   const { password: passwordPlainText, ...where } = params.args.where
@@ -42,5 +52,15 @@ prisma.$use(async (params, next) => {
     ? await passwordCheck(params, next)
     : await next(params, next)
 
+  if (result) {
+    return omit(['password'], result)
+  }
+
   return result
 })
+
+export const findUnique = prisma.user.findUnique
+export const findMany = prisma.user.findMany
+export const create = prisma.user.create
+export const update = prisma.user.update
+export const remove = prisma.user.delete
