@@ -2,7 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 import { background } from "@components/Theme/styled";
 
-import { Field, Box } from "@/components";
+import { Field, Box, Button } from "@/components";
 
 const Main = styled(Box)`
   justify-content: center;
@@ -15,7 +15,10 @@ export const Signup = () => {
       <Box style={{ width: 380 }}>
         <Field type="text" name="nome" label="Nome" mb={3} flex={1} />
         <Field type="text" name="email" label="E-mail " mb={3} />
-        <Field type="password" name="senha" label="Senha" />
+        <Field type="password" name="senha" label="Senha" mb={3} />
+        <Box flexbox center>
+          <Button>Registrar</Button>
+        </Box>
       </Box>
     </Main>
   );

@@ -3,6 +3,7 @@ const theme = (prop) => (value) => (props) => props.theme[prop][value];
 export const th = {
   space: theme("spaces"),
   size: theme("fontSize"),
+  color: theme("color"),
 };
 
 export const flexbox = (props) => {
