@@ -1,9 +1,17 @@
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
+import cors from '@koa/cors'
 import { router } from './routes.js'
 import 'dotenv/config'
 
 const app = new Koa()
+
+app.use(
+  cors({
+    origin: '*',
+    credentials: true,
+  })
+)
 
 app.use(
   bodyParser({
