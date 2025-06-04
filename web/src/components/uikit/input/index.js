@@ -9,4 +9,6 @@ export const Input = styled("input")`
   padding: ${th.space(2)}px ${th.space(1)}px;
   font-size: 16px;
   color: #fff;
+
+  ${({ disabled }) => disabled && `opacity: 0.5;`}
 `;
