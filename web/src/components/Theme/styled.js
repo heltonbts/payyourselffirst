@@ -52,10 +52,10 @@ ${mr && `margin-right: ${props.theme.spaces[mr]}`}
 };
 
 export const padding = (props) => {
-  const pb = props.pb || props.py || props.p;
-  const pt = props.pt || props.py || props.p;
-  const pl = props.pl || props.px || props.p;
-  const pr = props.pr || props.px || props.p;
+  const pb = props.pb ?? props.py ?? props.p;
+  const pt = props.pt ?? props.py ?? props.p;
+  const pl = props.pl ?? props.px ?? props.p;
+  const pr = props.pr ?? props.px ?? props.p;
 
   return `
 ${pb && `padding-bottom: ${props.theme.spaces[pb]}px;`}
